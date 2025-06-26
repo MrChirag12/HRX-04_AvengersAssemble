@@ -99,52 +99,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f9fc] to-[#e0e7ff] flex">
-      {/* Sidebar */}
-      <aside className="w-[260px] bg-white shadow-2xl px-6 py-8 hidden lg:flex flex-col justify-between border-r border-gray-200 rounded-tr-3xl rounded-br-3xl">
-        <div className="space-y-8">
-          {session?.user && (
-            <div className="flex flex-col items-center gap-3">
-              {session.user.image && (
-                <Image src={session.user.image} alt="Profile" width={72} height={72} className="rounded-full border-4 border-blue-200 shadow-lg transition-transform duration-300 hover:scale-105" />
-              )}
-              <div className="text-center text-sm">
-                <p className="font-semibold text-[#1e3a8a] text-lg">{session.user.name}</p>
-              </div>
-            </div>
-          )}
-
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-400 text-center tracking-tight drop-shadow-lg">EduNova</h2>
-
-          <nav className="flex flex-col gap-4">
-            {navLinks.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => router.push(item.route)}
-                className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-50 to-white shadow hover:from-blue-100 hover:to-blue-200 hover:text-blue-800 text-[#1e3a8a] font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                {item.icon}
-                <span className="text-base font-semibold">{item.label}</span>
-              </button>
-            ))}
-          </nav>
-
-          {/* Modern Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="mt-8 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 text-white font-bold shadow-lg hover:from-red-500 hover:to-red-700 hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
-            aria-label="Logout"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-            </svg>
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 px-6 py-10 space-y-10">
+    <>
+      <div className="px-6 py-10 space-y-10">
         {/* Announcements + Classes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white border rounded-2xl p-6 shadow-lg transition-transform duration-300 hover:scale-[1.025] hover:shadow-2xl">
@@ -216,7 +172,7 @@ export default function Dashboard() {
             <Calendar selected={date} onSelect={(selectedDate) => setDate(selectedDate || new Date())} className="rounded-xl border shadow" />
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

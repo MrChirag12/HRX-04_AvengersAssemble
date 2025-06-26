@@ -19,28 +19,33 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { label: "Feature 1", route: "/feature-1", icon: <Home size={18} /> },
     { label: "Feature 2", route: "/feature-2", icon: <FileText size={18} /> },
     { label: "Feature 3", route: "/feature-3", icon: <BarChart2 size={18} /> },
-    { label: "Feature 4", route: "/feature-4", icon: <MessageSquare size={18} /> },
+    { label: "AI-MENTOR", route: "/ai-mentor", icon: <MessageSquare size={18} /> },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8f9fc] to-[#e0e7ff] flex">
       {/* Sidebar */}
       <aside className="w-[260px] bg-white shadow-2xl px-6 py-8 hidden lg:flex flex-col justify-between border-r border-gray-200 rounded-tr-3xl rounded-br-3xl">
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8 flex-1">
           {session?.user && (
-            <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex flex-col items-center gap-3 focus:outline-none group"
+              style={{ background: 'none', border: 'none', padding: 0 }}
+              aria-label="Go to Dashboard"
+            >
               {session.user.image && (
-                <Image src={session.user.image} alt="Profile" width={72} height={72} className="rounded-full border-4 border-blue-200 shadow-lg transition-transform duration-300 hover:scale-105" />
+                <Image src={session.user.image} alt="Profile" width={72} height={72} className="rounded-full border-4 border-blue-200 shadow-lg transition-transform duration-300 group-hover:scale-105" />
               )}
               <div className="text-center text-sm">
-                <p className="font-semibold text-[#1e3a8a] text-lg">{session.user.name}</p>
+                <p className="font-semibold text-[#1e3a8a] text-lg group-hover:underline">{session.user.name}</p>
               </div>
-            </div>
+            </button>
           )}
 
           <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-400 text-center tracking-tight drop-shadow-lg">EduNova</h2>
 
-          <nav className="flex flex-col gap-4">
+          <nav className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0">
             {navLinks.map((item, idx) => (
               <button
                 key={idx}
@@ -53,10 +58,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
         </div>
-        {/* Logout button at the bottom */}
+        {/* Logout button at the bottom, always visible */}
         <button
           onClick={handleLogout}
-          className="mt-8 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 text-white font-bold shadow-lg hover:from-red-500 hover:to-red-700 hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 mb-2"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-400 to-red-600 text-white font-bold shadow-lg hover:from-red-500 hover:to-red-700 hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300"
           aria-label="Logout"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
