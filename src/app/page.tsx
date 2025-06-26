@@ -6,6 +6,10 @@ import { DockDemo } from "@/components/DockDemo";
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#e2e8f0] text-black px-6 sm:px-16 py-20 flex flex-col items-center justify-center gap-20">
+      
+      {/* Dock at top now */}
+      <DockDemo />
+
       <div className="text-center max-w-2xl">
         <h1 className="text-5xl font-bold mb-6">
           Empowering Learning with <span className="text-blue-600">AI-Driven</span> Tools
@@ -20,9 +24,6 @@ export default function Home() {
           Start Your Learning Journey →
         </Button>
       </div>
-
-      {/* Dock at bottom */}
-      <DockDemo />
     </main>
   );
 }
