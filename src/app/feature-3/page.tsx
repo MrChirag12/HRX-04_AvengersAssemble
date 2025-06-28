@@ -31,7 +31,7 @@ interface QuizReport {
 // Utility to dynamically load a script if not already present
 function loadScript(src: string, globalName: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (typeof window !== "undefined" && (window as any)[globalName]) {
+    if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>)[globalName]) {
       resolve();
       return;
     }
@@ -59,13 +59,10 @@ function useThumbsDownGesture(
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handsRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cameraRef = useRef<any>(null);
+  const handsRef = useRef<unknown>(null);
+  const cameraRef = useRef<unknown>(null);
   const lastGestureRef = useRef<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
-  const [handError, setHandError] = useState<string>("");
 
   useEffect(() => {
     let isMounted = true;
@@ -79,8 +76,7 @@ function useThumbsDownGesture(
         const canvasCtx = canvas.getContext("2d");
         if (!canvasCtx) return;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const detectGesture = (landmarks: any[]) => {
+        const detectGesture = (landmarks: Array<{ y: number }>): string | null => {
           const thumbTip = landmarks[4];
           const thumbIP = landmarks[3];
           const wrist = landmarks[0];
@@ -88,35 +84,25 @@ function useThumbsDownGesture(
           return isThumbDown ? "thumbsDown" : null;
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const onResultsHands = (results: any) => {
+        const onResultsHands = (results: { image: CanvasImageSource; multiHandLandmarks?: Array<Array<{ y: number }>> }): void => {
           if (!isMounted) return;
           canvasCtx.save();
           canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
           canvasCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-          if (
-            results.multiHandLandmarks &&
-            results.multiHandLandmarks.length > 0
-          ) {
-            for (
-              let index = 0;
-              index < results.multiHandLandmarks.length;
-              index++
-            ) {
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            for (let index = 0; index < results.multiHandLandmarks.length; index++) {
               const landmarks = results.multiHandLandmarks[index];
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (window as any).drawConnectors(
-                canvasCtx,
-                landmarks,
-                (window as any).HAND_CONNECTIONS,
-                { color: "#00FF00" }
-              );
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (window as any).drawLandmarks(canvasCtx, landmarks, {
-                color: "#00FF00",
-                fillColor: "#FF0000",
-                radius: 5,
-              });
+              const win = window as unknown as Record<string, unknown>;
+              if (typeof win.drawConnectors === "function" && typeof win.HAND_CONNECTIONS !== "undefined") {
+                (win.drawConnectors as (ctx: CanvasRenderingContext2D, l: Array<{ y: number }>, c: unknown, o: { color: string }) => void)(canvasCtx, landmarks, win.HAND_CONNECTIONS, { color: "#00FF00" });
+              }
+              if (typeof win.drawLandmarks === "function") {
+                (win.drawLandmarks as (ctx: CanvasRenderingContext2D, l: Array<{ y: number }>, o: { color: string; fillColor: string; radius: number }) => void)(canvasCtx, landmarks, {
+                  color: "#00FF00",
+                  fillColor: "#FF0000",
+                  radius: 5,
+                });
+              }
               const gesture = detectGesture(landmarks);
               if (gesture && gesture !== lastGestureRef.current) {
                 lastGestureRef.current = gesture;
@@ -132,21 +118,14 @@ function useThumbsDownGesture(
           canvasCtx.restore();
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const HandsClass =
-          typeof window !== "undefined" ? (window as any).Hands : undefined;
+        const win = window as unknown as Record<string, unknown>;
+        const HandsClass = typeof win.Hands === "function" ? (win.Hands as new (args: unknown) => { setOptions: (opts: unknown) => void; onResults: (cb: (results: unknown) => void) => void; send: (input: unknown) => Promise<void>; close: () => void }) : undefined;
         if (!HandsClass) {
-          setHandError(
-            "Hands not found on window. Make sure @mediapipe/hands is loaded."
-          );
-          errorHandler(
-            "Hands not found on window. Make sure @mediapipe/hands is loaded."
-          );
+          errorHandler("Hands not found on window. Make sure @mediapipe/hands is loaded.");
           return;
         }
         const hands = new HandsClass({
-          locateFile: (file: string) =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
         });
         hands.setOptions({
           maxNumHands: 1,
@@ -154,17 +133,20 @@ function useThumbsDownGesture(
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5,
         });
-        hands.onResults(onResultsHands);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const CameraClass =
-          typeof window !== "undefined" ? (window as any).Camera : undefined;
+        hands.onResults((results: unknown) => {
+          // Type guard for results
+          if (
+            typeof results === 'object' && results !== null &&
+            'image' in results &&
+            'multiHandLandmarks' in results
+          ) {
+            const typedResults = results as { image: CanvasImageSource; multiHandLandmarks?: Array<Array<{ y: number }>> };
+            onResultsHands(typedResults);
+          }
+        });
+        const CameraClass = typeof win.Camera === "function" ? (win.Camera as new (video: HTMLVideoElement, options: { onFrame: () => Promise<void>; width: number; height: number }) => { start: () => Promise<void>; stop: () => void }) : undefined;
         if (!CameraClass) {
-          setHandError(
-            "Camera class not found on window. Make sure @mediapipe/camera_utils is loaded."
-          );
-          errorHandler(
-            "Camera class not found on window. Make sure @mediapipe/camera_utils is loaded."
-          );
+          errorHandler("Camera class not found on window. Make sure @mediapipe/camera_utils is loaded.");
           return;
         }
         const camera = new CameraClass(video, {
@@ -173,12 +155,8 @@ function useThumbsDownGesture(
             try {
               await hands.send({ image: video });
             } catch (error) {
-              setHandError(
-                "Error sending frame to hands: " + (error as any)?.message
-              );
-              errorHandler(
-                "Error sending frame to hands: " + (error as any)?.message
-              );
+              const errMsg = error instanceof Error ? error.message : String(error);
+              errorHandler("Error sending frame to hands: " + errMsg);
             }
           },
           width: 480,
@@ -188,23 +166,23 @@ function useThumbsDownGesture(
         handsRef.current = hands;
         cameraRef.current = camera;
         setIsInitialized(true);
-      } catch (error: any) {
-        setHandError("Error initializing hands: " + error.message);
-        errorHandler("Error initializing hands: " + error.message);
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        errorHandler("Error initializing hands: " + errMsg);
       }
     };
     initializeHands();
     return () => {
       isMounted = false;
-      if (cameraRef.current) {
+      if (cameraRef.current && typeof (cameraRef.current as { stop?: () => void }).stop === "function") {
         try {
-          cameraRef.current.stop();
+          (cameraRef.current as { stop: () => void }).stop();
         } catch {}
       }
-      if (handsRef.current) {
+      if (handsRef.current && typeof (handsRef.current as { onResults?: () => void; close?: () => void }).close === "function") {
         try {
-          handsRef.current.onResults = () => {};
-          handsRef.current.close();
+          (handsRef.current as { onResults?: () => void; close: () => void }).onResults = () => {};
+          (handsRef.current as { close: () => void }).close();
         } catch {
         } finally {
           handsRef.current = null;
@@ -213,7 +191,7 @@ function useThumbsDownGesture(
     };
   }, [cameraActive, onThumbsDown, errorHandler, mediaPipeLoaded]);
 
-  return { videoRef, canvasRef, isInitialized, handError };
+  return { videoRef, canvasRef, isInitialized };
 }
 
 // Gemini API helpers
@@ -320,7 +298,6 @@ const QuizPage: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [report, setReport] = useState<QuizReport | null>(null);
   const [cameraActive, setCameraActive] = useState(true);
-  const [handError, setHandError] = useState<string>("");
   const [hintsTaken, setHintsTaken] = useState<boolean[]>([]);
   const [mediaPipeLoaded, setMediaPipeLoaded] = useState(false);
 
@@ -351,7 +328,6 @@ const QuizPage: React.FC = () => {
     videoRef,
     canvasRef,
     isInitialized,
-    handError: mediaPipeHandError,
   } = useThumbsDownGesture(
     () => {
       setShowHint(true);
@@ -368,7 +344,7 @@ const QuizPage: React.FC = () => {
       });
     },
     cameraActive,
-    (msg) => setHandError(msg),
+    () => {},
     mediaPipeLoaded
   );
 
@@ -387,8 +363,8 @@ const QuizPage: React.FC = () => {
       setQuiz(data);
       setHintsTaken(Array(data.questions.length).fill(false));
       setStep("quiz");
-    } catch (e: any) {
-      setError(e.message || "Failed to fetch quiz.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to fetch quiz.");
     } finally {
       setLoading(false);
     }
@@ -408,8 +384,8 @@ const QuizPage: React.FC = () => {
       const rep = await fetchReport(quiz.questions, answers, hintsInfo);
       setReport(rep);
       setStep("report");
-    } catch (e: any) {
-      setError(e.message || "Failed to generate report.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to generate report.");
     } finally {
       setLoading(false);
     }
@@ -449,7 +425,6 @@ const QuizPage: React.FC = () => {
     setReport(null);
     setError("");
     setCameraActive(true);
-    setHandError("");
   };
 
   // UI
@@ -510,9 +485,6 @@ const QuizPage: React.FC = () => {
                 </div>
               )}
             </div>
-            {handError && (
-              <div className="text-red-500 text-sm mt-2">{handError}</div>
-            )}
           </div>
         )}
         {error && <div className="text-red-600 mb-4 text-center">{error}</div>}
