@@ -27,7 +27,7 @@
 ---
 
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, Radix UI, lucide-react  
 - **Backend**: NextAuth.js, PostgreSQL  
@@ -37,7 +37,7 @@
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
