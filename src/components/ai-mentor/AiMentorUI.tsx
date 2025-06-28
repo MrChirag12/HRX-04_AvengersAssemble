@@ -6,42 +6,142 @@ import Vapi from '@vapi-ai/web';
 const AiMentorUI = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [callStarted, setCallStarted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const vapiRef = useRef<any>(null);
 
   useEffect(() => {
-    const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!);
-    vapiRef.current = vapi;
+    // Check if environment variables are available
+    const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
+    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
 
-    vapi.on('call-start', () => {
-      console.log('📞 Call started');
-      setIsSpeaking(true);
-      setCallStarted(true);
-    });
+    // Debug logging
+    console.log('🔍 Environment variables check:');
+    console.log('Public Key exists:', !!publicKey);
+    console.log('Assistant ID exists:', !!assistantId);
+    console.log('Public Key length:', publicKey?.length);
+    console.log('Assistant ID length:', assistantId?.length);
 
-    vapi.on('call-end', () => {
-      console.log('🛑 Call ended');
-      setIsSpeaking(false);
-      setCallStarted(false);
-    });
+    if (!publicKey || !assistantId) {
+      const missingVars = [];
+      if (!publicKey) missingVars.push('NEXT_PUBLIC_VAPI_PUBLIC_KEY');
+      if (!assistantId) missingVars.push('NEXT_PUBLIC_VAPI_ASSISTANT_ID');
+      
+      setError(`Vapi configuration is missing: ${missingVars.join(', ')}. Please set these environment variables.`);
+      return;
+    }
 
-    vapi.on('error', (e: any) => {
-      console.error('❗ Vapi error:', e);
-      setIsSpeaking(false);
-      setCallStarted(false);
-    });
+    try {
+      console.log('🚀 Initializing Vapi with public key:', publicKey.substring(0, 8) + '...');
+      const vapi = new Vapi(publicKey);
+      vapiRef.current = vapi;
 
-    return () => {
-      vapi.stop();
-    };
+      vapi.on('call-start', () => {
+        console.log('📞 Call started');
+        setIsSpeaking(true);
+        setCallStarted(true);
+        setError(null);
+      });
+
+      vapi.on('call-end', () => {
+        console.log('🛑 Call ended');
+        setIsSpeaking(false);
+        setCallStarted(false);
+      });
+
+      vapi.on('error', (e: any) => {
+        console.error('❗ Vapi error:', e);
+        setIsSpeaking(false);
+        setCallStarted(false);
+        setError(e?.message || 'An error occurred with the Vapi service');
+      });
+
+      console.log('✅ Vapi initialized successfully');
+      return () => {
+        if (vapiRef.current) {
+          vapiRef.current.stop();
+        }
+      };
+    } catch (err: any) {
+      console.error('Failed to initialize Vapi:', err);
+      setError(err?.message || 'Failed to initialize Vapi service');
+    }
   }, []);
 
-  const handleStartCall = () => {
-    vapiRef.current?.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!);
+  const handleStartCall = async () => {
+    const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+    
+    if (!assistantId) {
+      setError('Assistant ID is not configured');
+      return;
+    }
+
+    if (!vapiRef.current) {
+      setError('Vapi is not initialized');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('🎯 Starting call with assistant ID:', assistantId);
+      await vapiRef.current.start(assistantId);
+    } catch (err: any) {
+      console.error('Failed to start call:', err);
+      setError(err?.message || 'Failed to start call');
+      setIsLoading(false);
+    }
   };
 
   const handleEndCall = () => {
-    vapiRef.current?.stop();
+    if (vapiRef.current) {
+      vapiRef.current.stop();
+    }
+    setIsLoading(false);
   };
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full px-4 text-center bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc]">
+        <div className="max-w-md w-full mx-auto rounded-3xl p-8 shadow-2xl border border-white/30 bg-white/80">
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Configuration Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 text-left w-full">
+              <p className="font-semibold mb-2">To fix this:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Create a <code className="bg-gray-200 px-1 rounded">.env.local</code> file in your project root</li>
+                <li>Add your Vapi credentials:</li>
+                <li className="ml-4">
+                  <code className="bg-gray-200 px-1 rounded block mt-1">
+                    NEXT_PUBLIC_VAPI_PUBLIC_KEY=your_public_key_here
+                  </code>
+                </li>
+                <li className="ml-4">
+                  <code className="bg-gray-200 px-1 rounded block mt-1">
+                    NEXT_PUBLIC_VAPI_ASSISTANT_ID=your_assistant_id_here
+                  </code>
+                </li>
+                <li>Restart your development server</li>
+              </ol>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-center min-h-screen w-full px-4 text-center bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc] gap-8">
@@ -98,11 +198,19 @@ const AiMentorUI = () => {
           {!callStarted ? (
             <button
               onClick={handleStartCall}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-xl font-bold text-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              disabled={isLoading}
+              className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-bold text-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:cursor-not-allowed"
             >
               <span className="inline-flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                Start Call
+                {isLoading ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                )}
+                {isLoading ? 'Starting...' : 'Start Call'}
               </span>
             </button>
           ) : (

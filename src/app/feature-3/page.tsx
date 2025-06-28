@@ -5,6 +5,8 @@ import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // Gemini API Key (replace with your own if needed)
 const GOOGLE_API_KEY = "AIzaSyBiAMiZ0GSqTtaMIeBXzuv38-JHJJ8sy8w";
@@ -241,13 +243,14 @@ Do NOT include answers in the output to the user, but include them in the JSON.`
 async function fetchReport(
   questions: QuizQuestion[],
   answers: string[],
-  hintsInfo: { question: string; hintTaken: boolean }[]
+  hintsInfo: { question: string; hintTaken: boolean }[],
+  score: number
 ): Promise<QuizReport> {
   const prompt = `Given the following quiz questions, the user's answers, the correct answers, and which questions had hints shown, generate a short, crisp, highly personalized report (max 3-4 sentences for the summary).\nInclude:\n- A short summary (max 3-4 sentences, highly personalized, not generic)\n- The user's score out of 5 (show this first)\n- Feedback for improvement\n- A table listing for each question: the question, the user's answer, the correct answer, whether a hint was used, and a suggestion for the user for that question\n- Make the report visually engaging and professional, using clear sections and formatting.\n\nQuestions: ${JSON.stringify(
     questions
   )}\nAnswers: ${JSON.stringify(answers)}\nHintsTaken: ${JSON.stringify(
     hintsInfo
-  )}`;
+  )}\nScore: ${score}`;
   const response = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
     {
@@ -264,9 +267,6 @@ async function fetchReport(
   const result = await response.json();
   const text =
     result.candidates?.[0]?.content?.parts?.[0]?.text || "No report generated.";
-  // Try to extract score and feedback
-  const scoreMatch = text.match(/score\s*[:=\-]?\s*(\d+)/i);
-  const score = scoreMatch ? parseInt(scoreMatch[1], 10) : undefined;
   return { summary: text, score };
 }
 
@@ -381,7 +381,15 @@ const QuizPage: React.FC = () => {
         question: q.question,
         hintTaken: hintsTaken[idx],
       }));
-      const rep = await fetchReport(quiz.questions, answers, hintsInfo);
+      // Calculate score locally
+      let score = 0;
+      quiz.questions.forEach((q, idx) => {
+        const userAns = (answers[idx] || "").trim().toLowerCase();
+        const correctAns = (q.answer || "").trim().toLowerCase();
+        if (userAns && correctAns && userAns === correctAns) score++;
+      });
+      const rep = await fetchReport(quiz.questions, answers, hintsInfo, score);
+      rep.score = score;
       setReport(rep);
       setStep("report");
     } catch (e: unknown) {
@@ -397,15 +405,6 @@ const QuizPage: React.FC = () => {
     newAnswers[current] = ans;
     setAnswers(newAnswers);
     setShowHint(false);
-    // If answer is changed, reset hint for this question
-    setHintsTaken((prev) => {
-      const updated = [...prev];
-      if (quiz && updated.length !== quiz.questions.length) {
-        return Array(quiz.questions.length).fill(false);
-      }
-      updated[current] = false;
-      return updated;
-    });
   };
 
   // Next question
@@ -425,6 +424,40 @@ const QuizPage: React.FC = () => {
     setReport(null);
     setError("");
     setCameraActive(true);
+  };
+
+  // PDF Download Handler
+  const handleDownloadPDF = async () => {
+    const reportCard = document.getElementById("quiz-report-card");
+    if (!reportCard) return;
+
+    // Store original styles
+    const originalBg = reportCard.style.background;
+    const originalColor = reportCard.style.color;
+
+    // Force supported colors
+    reportCard.style.background = "#fff";
+    reportCard.style.color = "#111";
+
+    const canvas = await html2canvas(reportCard);
+
+    // Restore original styles
+    reportCard.style.background = originalBg;
+    reportCard.style.color = originalColor;
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - 40;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, "PNG", 20, 20, imgWidth, imgHeight);
+    pdf.save("quiz-report.pdf");
+  };
+
+  // Print Handler
+  const handlePrint = () => {
+    window.print();
   };
 
   // UI
@@ -491,13 +524,13 @@ const QuizPage: React.FC = () => {
         {step === "start" && (
           <div className="flex flex-col items-center gap-4">
             <Input
-  type="text"
-  className="!text-black bg-white border border-indigo-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder:text-gray-500"
-  placeholder="Enter a topic (e.g. Algebra, World War II, Photosynthesis)"
-  value={topic}
-  onChange={(e) => setTopic(e.target.value)}
-  disabled={loading}
-/>
+              type="text"
+              className="!text-black bg-white border border-indigo-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder:text-gray-500"
+              placeholder="Enter a topic (e.g. Algebra, World War II, Photosynthesis)"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              disabled={loading}
+            />
 
             <Button
               onClick={startQuiz}
@@ -526,14 +559,12 @@ const QuizPage: React.FC = () => {
                     {quiz.questions[current].options.map((opt, idx) => (
                       <Button
                         key={idx}
-                        variant={
-                          answers[current] === opt ? "default" : "outline"
-                        }
+                        variant={answers[current] === opt ? "default" : "outline"}
                         className="text-left"
                         onClick={() => handleAnswer(opt)}
                         disabled={loading}
                       >
-                        {String.fromCharCode(65 + idx)}. {opt}
+                        {opt}
                       </Button>
                     ))}
                   </div>
@@ -541,7 +572,8 @@ const QuizPage: React.FC = () => {
               {quiz.questions[current].type === "short" && (
                 <Input
                   type="text"
-                  className="mt-2"
+                  style={{ color: "#111", background: "#fff" }}
+                  className="mt-2 border-2 border-indigo-400 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder:text-gray-500"
                   placeholder="Type your answer..."
                   value={answers[current] || ""}
                   onChange={(e) => handleAnswer(e.target.value)}
@@ -599,15 +631,7 @@ const QuizPage: React.FC = () => {
                 <div className="text-3xl font-bold text-green-700 mb-2 tracking-tight drop-shadow">
                   Quiz Report
                 </div>
-                <Card className="w-full max-w-5xl bg-gradient-to-br from-white to-indigo-50 border border-indigo-200 rounded-3xl p-8 flex flex-col gap-8 shadow-2xl transition-all duration-300 hover:shadow-[0_8px_32px_rgba(99,102,241,0.15)]">
-                  {typeof report.score === "number" && (
-                    <div className="text-2xl font-semibold text-indigo-700 flex items-center gap-2">
-                      <span className="inline-block w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg shadow">
-                        {report.score}
-                      </span>
-                      <span>out of 5</span>
-                    </div>
-                  )}
+                <Card id="quiz-report-card" className="w-full max-w-5xl bg-gradient-to-br from-white to-indigo-50 border border-indigo-200 rounded-3xl p-8 flex flex-col gap-8 shadow-2xl transition-all duration-300 hover:shadow-[0_8px_32px_rgba(99,102,241,0.15)]">
                   <div className="text-xl font-bold text-indigo-800 mb-2 mt-2">
                     Summary
                   </div>
@@ -680,6 +704,23 @@ const QuizPage: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
+                  {/* Hints Used Summary - improved */}
+                  <div className="mt-4 text-indigo-800 text-base font-semibold">
+                    <div className="text-lg font-bold mb-2">Questions where hints were used:</div>
+                    {quiz?.questions.some((q, idx) => hintsTaken[idx]) ? (
+                      <ul className="list-disc list-inside space-y-1">
+                        {quiz?.questions.map((q, idx) =>
+                          hintsTaken[idx] ? (
+                            <li key={idx}>
+                              <span className="font-bold">Q{idx + 1}:</span> {q.question}
+                            </li>
+                          ) : null
+                        )}
+                      </ul>
+                    ) : (
+                      <span className="text-gray-500">No hints were used.</span>
+                    )}
+                  </div>
                   {areas && (
                     <div className="mt-8">
                       <div className="text-xl font-bold text-indigo-800 mb-2">
@@ -691,12 +732,20 @@ const QuizPage: React.FC = () => {
                     </div>
                   )}
                 </Card>
-                <Button
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-2xl shadow-lg transition-all duration-200 mt-4 text-lg"
-                  onClick={restart}
-                >
-                  Restart
-                </Button>
+                <div className="flex gap-4 mt-4">
+                  <Button
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-2xl shadow-lg transition-all duration-200 text-lg"
+                    onClick={restart}
+                  >
+                    Restart
+                  </Button>
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-2xl shadow-lg transition-all duration-200 text-lg"
+                    onClick={handlePrint}
+                  >
+                    Print / Save as PDF
+                  </Button>
+                </div>
               </div>
             );
           })()}
@@ -710,3 +759,20 @@ const QuizPage: React.FC = () => {
 };
 
 export default QuizPage;
+
+<style jsx global>{`
+  @media print {
+    body * {
+      visibility: hidden !important;
+    }
+    #quiz-report-card, #quiz-report-card * {
+      visibility: visible !important;
+    }
+    #quiz-report-card {
+      position: absolute !important;
+      left: 0; top: 0; width: 100vw !important; background: #fff !important;
+      box-shadow: none !important;
+      color: #111 !important;
+    }
+  }
+`}</style>

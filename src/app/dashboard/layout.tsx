@@ -20,6 +20,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { label: "AI-Course", route: "/feature-2", icon: <FileText size={18} className="text-green-500" /> },
     { label: "Quiz Generator", route: "/feature-3", icon: <BarChart2 size={18} className="text-purple-500" /> },
     { label: "AI-MENTOR", route: "/ai-mentor", icon: <Mic size={18} className="text-pink-500" /> },
+    { label: "Hands-On Coding", route: "/feature-4", icon: <MessageSquare size={18} className="text-orange-500" /> },
   ];
 
   return (
