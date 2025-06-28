@@ -17,17 +17,11 @@ export default function Feature1Page() {
   };
 
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-8 p-10">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-xl flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-blue-700 mb-2 text-center">
-          Welcome to Magic Learn AI Launcher
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc] px-4">
+      <div className="relative max-w-2xl w-full mx-auto rounded-3xl p-16 shadow-2xl border border-white/30 bg-white/80 flex flex-col items-center" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
+        <h1 className="text-4xl font-bold text-blue-700 mb-8 text-center">
+          Magic Learn AI Launcher
         </h1>
-        <p className="text-gray-700 text-center mb-6">
-          Launch the interactive Streamlit app for gesture-based AI learning
-          tools.
-          <br />
-          (Make sure the Streamlit app is running in another tab or window.)
-        </p>
         {loading ? (
           <div className="flex flex-col items-center gap-4 my-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-2"></div>
@@ -37,10 +31,10 @@ export default function Feature1Page() {
           </div>
         ) : (
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg text-lg transition-all duration-200"
+            className="px-10 py-4 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-2xl font-bold text-xl shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             onClick={handleLaunch}
           >
-            Open Streamlit App
+            Enter into Magic Learning
           </Button>
         )}
       </div>

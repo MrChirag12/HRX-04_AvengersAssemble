@@ -429,7 +429,7 @@ const QuizPage: React.FC = () => {
 
   // UI
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-100 to-white">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc]">
       <Card className="w-full max-w-2xl p-8 relative">
         <h1 className="text-3xl font-bold text-indigo-700 mb-2 text-center">
           AI Quiz Generator
@@ -491,13 +491,14 @@ const QuizPage: React.FC = () => {
         {step === "start" && (
           <div className="flex flex-col items-center gap-4">
             <Input
-              type="text"
-              className="border border-indigo-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              placeholder="Enter a topic (e.g. Algebra, World War II, Photosynthesis)"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={loading}
-            />
+  type="text"
+  className="!text-black bg-white border border-indigo-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder:text-gray-500"
+  placeholder="Enter a topic (e.g. Algebra, World War II, Photosynthesis)"
+  value={topic}
+  onChange={(e) => setTopic(e.target.value)}
+  disabled={loading}
+/>
+
             <Button
               onClick={startQuiz}
               disabled={!topic.trim() || loading || !mediaPipeLoaded}

@@ -100,13 +100,13 @@ export default function Dashboard() {
   ];
 
   // --- Dashboard Layout ---
-  // Helper for week days
-  const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Monday
-  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(weekStart, i));
+  // Helper for next 5 days including today
+  const today = new Date();
+  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(today, i));
   const dayColors = ["bg-red-400", "bg-green-400", "bg-blue-400", "bg-purple-400", "bg-pink-400"];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f8f9fc] to-[#e0e7ff]">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc]">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-8 py-6 bg-white/80 border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-2 text-2xl font-bold text-[#1e3a8a]">
@@ -192,23 +192,50 @@ export default function Dashboard() {
               <User className="text-blue-400 w-5 h-5" />
               Profile
             </div>
-            {session?.user?.image && (
-              <img src={session.user.image} alt="Profile" className="w-20 h-20 rounded-full border-4 border-blue-200 shadow mb-3 mx-auto" />
-            )}
+            <div className="w-20 h-20 rounded-full border-4 border-blue-200 shadow mb-3 mx-auto overflow-hidden bg-gray-100 flex items-center justify-center">
+              {session?.user?.image ? (
+                <Image 
+                  src={session.user.image} 
+                  alt="Profile" 
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                  unoptimized={true}
+                  onError={(e) => {
+                    // Fallback to initials if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-blue-500 text-white font-bold text-xl">
+                          ${session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white font-bold text-xl">
+                  {session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+              )}
+            </div>
             <div className="text-center">
-              <div className="font-bold text-lg text-[#1e3a8a]">{session?.user?.name}</div>
-              <div className="text-xs text-gray-500">{session?.user?.email}</div>
+              <div className="font-bold text-lg text-[#1e3a8a]">{session?.user?.name || 'User'}</div>
+              <div className="text-xs text-gray-500">{session?.user?.email || 'No email'}</div>
             </div>
             <div className="mt-4 text-center">
-              <div className="text-lg font-semibold text-gray-700">{format(date, 'EEEE, dd MMMM')}</div>
+              <div className="text-lg font-semibold text-gray-700">{format(new Date(), 'EEEE, dd MMMM')}</div>
             </div>
             {/* Date Selector */}
             <div className="flex justify-center gap-3 mt-6">
               {weekDays.map((d, i) => (
                 <div key={i} className="flex flex-col items-center">
                   <div
-                    className={`w-10 h-10 flex flex-col items-center justify-center rounded-xl font-semibold text-sm mb-1 transition-all
-                      ${isSameDay(d, date) ? 'bg-[#1e3a8a] text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}
+                    className={`w-10 h-10 flex flex-col items-center justify-center rounded-xl font-semibold text-sm mb-1 transition-all cursor-pointer hover:bg-blue-100
+                      ${isSameDay(d, today) ? 'bg-[#1e3a8a] text-white shadow-lg' : 'bg-gray-100 text-gray-700'}`}
+                    onClick={() => setDate(d)}
                   >
                     <div>{format(d, 'dd')}</div>
                     <div className="text-[11px] font-normal">{format(d, 'EEE')}</div>

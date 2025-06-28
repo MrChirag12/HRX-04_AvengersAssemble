@@ -61,7 +61,7 @@ export default function CourseFormModal({ open, onClose, onCourseCreated }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/30 backdrop-blur-md">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg relative">
         <button className="absolute top-3 right-3 text-gray-400 hover:text-gray-700" onClick={onClose}>&times;</button>
         <h2 className="text-2xl font-bold text-blue-700 mb-4">Create a Personalized Course</h2>
