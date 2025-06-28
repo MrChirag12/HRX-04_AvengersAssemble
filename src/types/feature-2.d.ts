@@ -31,6 +31,8 @@ export interface Course {
   includeVideo: boolean;
   noOfChapters: number;
   bannerImagePrompt: string;
+  bannerImageUrl?: string;
   chapters: Chapter[];
   cid?: string;
+  userEmail?: string;
 } 
