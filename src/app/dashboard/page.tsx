@@ -1,12 +1,11 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Calendar } from "@/components/ui/calendar";
-import { Home, FileText, BarChart2, MessageSquare, Mic, User, Megaphone, BookOpen, ClipboardList, Hand } from "lucide-react"; // Icon imports
-import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
+import { User, Megaphone, BookOpen, ClipboardList, Hand } from "lucide-react"; // Icon imports
+import { addDays, format, isSameDay } from 'date-fns';
 
 interface Course {
   id: string;
@@ -34,7 +33,6 @@ export default function Dashboard() {
   const [assignments, setAssignments] = useState<Record<string, Assignment[]>>({});
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [showAllCourses, setShowAllCourses] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -87,17 +85,6 @@ export default function Dashboard() {
         }));
       });
   }, [selectedCourseId, session]);
-
-  const handleLogout = () => {
-    signOut({ redirect: true, callbackUrl: "/auth" });
-  };
-
-  const navLinks = [
-    { label: "Feature 1", route: "/feature-1", icon: <Home size={18} /> },
-    { label: "Feature 2", route: "/feature-2", icon: <FileText size={18} /> },
-    { label: "Feature 3", route: "/feature-3", icon: <BarChart2 size={18} /> },
-    { label: "Feature 4", route: "/feature-4", icon: <MessageSquare size={18} /> },
-  ];
 
   // --- Dashboard Layout ---
   // Helper for next 5 days including today
