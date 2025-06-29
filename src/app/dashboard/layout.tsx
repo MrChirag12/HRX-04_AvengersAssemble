@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Home, FileText, BarChart2, MessageSquare, Mic } from "lucide-react";
+import { Home, FileText, BarChart2, MessageSquare, Mic, Trophy } from "lucide-react";
 import { ReactNode, useState } from "react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -19,6 +19,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { label: "Magic Learn", route: "/feature-1", icon: <Home size={18} className="text-blue-500" /> },
     { label: "AI-Course", route: "/feature-2", icon: <FileText size={18} className="text-green-500" /> },
     { label: "Quiz Generator", route: "/feature-3", icon: <BarChart2 size={18} className="text-purple-500" /> },
+    { label: "Leaderboard", route: "/feature-5", icon: <Trophy size={18} className="text-yellow-500" /> },
     { label: "AI-MENTOR", route: "/ai-mentor", icon: <Mic size={18} className="text-pink-500" /> },
     { label: "Hands-On Coding", route: "/feature-4", icon: <MessageSquare size={18} className="text-orange-500" /> },
   ];

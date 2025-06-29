@@ -3238,7 +3238,7 @@ function LanguageSelection({ onComplete }: { onComplete: (language: string, leve
                 <Code2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Arise Assistant</h2>
+                <h2 className="text-lg font-semibold text-gray-900">EduVerse Assistant</h2>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <span className="text-sm text-gray-600">Online</span>
@@ -3588,7 +3588,7 @@ function TopicRecommendation({
                 <Input
                   type="text"
                   placeholder="Search topics..."
-                  className="pl-10 pr-4 py-2 w-full bg-white/50 backdrop-blur-sm border-gray-200 focus:border-indigo-500 rounded-xl"
+                  className="pl-10 pr-4 py-2 w-full bg-white/50 backdrop-blur-sm border-gray-200 focus:border-indigo-500 rounded-xl text-gray-900"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />

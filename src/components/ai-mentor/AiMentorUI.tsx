@@ -3,11 +3,16 @@
 import { useEffect, useState, useRef } from 'react';
 import Vapi from '@vapi-ai/web';
 
-const AiMentorUI = () => {
+type AiMentorUIProps = {
+  imageSrc: string;
+};
+
+const AiMentorUI = ({ imageSrc }: AiMentorUIProps) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [callStarted, setCallStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0.5);
   const vapiRef = useRef<any>(null);
 
   useEffect(() => {
@@ -100,6 +105,10 @@ const AiMentorUI = () => {
     setIsLoading(false);
   };
 
+  const handleAudioLevelChange = (level: number) => {
+    setAudioLevel(level);
+  };
+
   // Show error state
   if (error) {
     return (
@@ -145,17 +154,15 @@ const AiMentorUI = () => {
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-center min-h-screen w-full px-4 text-center bg-gradient-to-br from-indigo-200 via-blue-100 to-[#f8fafc] gap-8">
-      {/* Static image on the left (hidden on mobile) */}
-      <div className="hidden md:flex items-center justify-center h-full">
-        <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 flex items-center justify-center bg-transparent" style={{ width: 340, height: 400 }}>
-          <img
-            src="/ai-mentor-avatar.png"
-            alt="AI Mentor Avatar"
-            className="object-contain w-full h-full"
-            style={{ maxHeight: 400, maxWidth: 340 }}
-          />
-        </div>
+      {/* Only render the static avatar image */}
+      <div className="relative">
+        <img
+          src={imageSrc}
+          alt="AI Mentor Avatar"
+          className="w-full h-full object-contain"
+        />
       </div>
+      
       {/* AI Mentor UI Card */}
       <div className="relative max-w-md w-full mx-auto rounded-3xl p-8 shadow-2xl border border-white/30 bg-transparent" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
         {/* Animated glowing border and floating avatar */}
