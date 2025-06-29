@@ -87,7 +87,7 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     async function fetchCourse() {
       setLoading(true);
-      const res = await fetch(`/api/feature-2/courses?id=${id}`);
+      const res = await fetch(`/api/feature-2/courses?cid=${id}`);
       if (res.ok) {
         const data = await res.json();
         setCourse(data.course);
@@ -109,7 +109,7 @@ export default function CourseDetailsPage() {
     await fetch("/api/feature-2/courses", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: course.name }),
+      body: JSON.stringify({ cid: course.cid }),
     });
     setDeleting(false);
     router.push("/feature-2");
@@ -217,17 +217,16 @@ export default function CourseDetailsPage() {
               <div className="w-5/12 bg-white p-4 rounded-lg shadow-sm" />
             </div>
           ))}
+          {activeSubtopic && (
+            <TopicReelModal
+              open={!!activeSubtopic}
+              onClose={() => setActiveSubtopic(null)}
+              subtopics={activeSubtopic.subtopics}
+              initialIndex={activeSubtopic.index}
+            />
+          )}
         </div>
       </div>
-
-      {activeSubtopic && (
-        <TopicReelModal
-          open={!!activeSubtopic}
-          onClose={() => setActiveSubtopic(null)}
-          subtopics={activeSubtopic.subtopics}
-          initialIndex={activeSubtopic.index}
-        />
-      )}
     </div>
   );
 }

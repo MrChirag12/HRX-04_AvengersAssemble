@@ -145,7 +145,7 @@ Number of Chapters: ${noOfChapters}`;
 
     return NextResponse.json(courseData);
   } catch (error) {
-    console.error("Gemini API error:", error);
+    console.error('Gemini API or DB Error:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 } 

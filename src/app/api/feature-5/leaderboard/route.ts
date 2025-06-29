@@ -35,21 +35,26 @@ export async function GET() {
     `;
 
     const result = await pool.query(query);
-    
-    const leaderboard = result.rows.map((row: LeaderboardRow) => ({
-      rank: parseInt(row.rank),
-      userEmail: row.user_email,
-      displayName: row.display_name,
-      points: parseInt(row.points),
-      totalCoursesCompleted: parseInt(row.total_courses_completed),
-      totalChaptersCompleted: parseInt(row.total_chapters_completed)
-    }));
-
+    console.log('Leaderboard query result:', result.rows);
+    let leaderboard = [];
+    try {
+      leaderboard = result.rows.map((row: LeaderboardRow) => ({
+        rank: parseInt(row.rank),
+        userEmail: row.user_email,
+        displayName: row.display_name,
+        points: parseInt(row.points),
+        totalCoursesCompleted: parseInt(row.total_courses_completed),
+        totalChaptersCompleted: parseInt(row.total_chapters_completed)
+      }));
+    } catch (err) {
+      console.error('Leaderboard mapping error:', err, result.rows);
+      return NextResponse.json({ error: 'Leaderboard mapping error' }, { status: 500 });
+    }
     return NextResponse.json({ leaderboard });
   } catch (error) {
-    console.error("Leaderboard API error:", error);
+    console.error('Leaderboard API DB Error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch leaderboard" },
+      { error: 'Failed to fetch leaderboard', details: (error as Error).message },
       { status: 500 }
     );
   }

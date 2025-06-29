@@ -47,6 +47,7 @@ export default function Feature2Page() {
     if (!storeRes.ok) {
       throw new Error("Failed to save course");
     }
+    await storeRes.json(); // If you need to link this course to user_progress or points_history, use the returned courseId
     setShowModal(false);
     const coursesRes = await fetch("/api/feature-2/courses");
     if (coursesRes.ok) {
@@ -76,7 +77,7 @@ export default function Feature2Page() {
             const total = course.noOfChapters || (course.chapters?.length ?? 0);
             const completed = Math.floor(Math.random() * (total + 1));
             return (
-              <Link key={course.cid || course.name} href={`/feature-2/${course.name}`}>
+              <Link key={course.cid} href={`/feature-2/${course.cid}`}>
                 <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200">
                   {/* Course Banner Image */}
                   <div className="w-full h-48 relative bg-gradient-to-br from-blue-50 to-indigo-100">

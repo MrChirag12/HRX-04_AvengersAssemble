@@ -1,28 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { runMigrations } from "@/lib/db-migration";
-
-// Run migrations on API startup
-let migrationsRun = false;
-async function ensureMigrations() {
-  if (!migrationsRun) {
-    try {
-      await runMigrations();
-      migrationsRun = true;
-    } catch (error) {
-      console.error("Failed to run migrations:", error);
-    }
-  }
-}
 
 export async function GET(req: NextRequest) {
-  await ensureMigrations();
+  // await ensureMigrations(); // Disabled to avoid masking DB errors
   
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+  const cid = searchParams.get("cid");
   try {
-    if (id) {
-      const result = await pool.query("SELECT * FROM courses WHERE name = $1", [id]);
+    if (cid) {
+      const result = await pool.query("SELECT * FROM courses WHERE cid = $1", [cid]);
       if (result.rows.length === 0) return NextResponse.json({ error: "Course not found" }, { status: 404 });
       const courseData = result.rows[0].coursejson;
       // Add bannerImageUrl to the course data if it exists
@@ -43,12 +29,13 @@ export async function GET(req: NextRequest) {
       })
     });
   } catch (error) {
+    console.error('DB Error:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  await ensureMigrations();
+  // await ensureMigrations(); // Disabled to avoid masking DB errors
   
   const { course } = await req.json();
   try {
@@ -85,7 +72,10 @@ export async function POST(req: NextRequest) {
         bannerImageUrl
       ]
     );
-    return NextResponse.json({ success: true });
+    // Fetch the numeric id
+    const idResult = await pool.query('SELECT id FROM courses WHERE cid = $1', [cid]);
+    const courseId = idResult.rows[0]?.id;
+    return NextResponse.json({ success: true, courseId });
   } catch (error) {
     console.error("DB Insert Error:", error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -93,11 +83,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  await ensureMigrations();
+  // await ensureMigrations(); // Disabled to avoid masking DB errors
   
-  const { id } = await req.json();
+  const { cid } = await req.json();
   try {
-    await pool.query("DELETE FROM courses WHERE name = $1", [id]);
+    await pool.query("DELETE FROM courses WHERE cid = $1", [cid]);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
